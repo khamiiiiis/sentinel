@@ -1,15 +1,47 @@
 // Sentinel - shared mutable state and DOM element references used across
 // every page module. Loaded early so everything below can rely on it.
 
-let apiBase = document.getElementById('apiBase').value.replace(/\/$/, '');
+let apiBase = sessionStorage.getItem('sentinel_apiBase') || document.getElementById('apiBase').value.replace(/\/$/, '');
 let ws = null;
 let allowCount = 0, blockCount = 0, alertCount = 0;
 
-// Kept in memory only - not localStorage/sessionStorage, since this page
-// can render inside an artifact preview where browser storage isn't
-// available. That means a refresh requires signing in again.
-let authToken = null;
-let currentRole = null;
+// Kept in sessionStorage (not localStorage) so a page refresh doesn't
+// force signing in again, but the session still ends when the tab/
+// browser is closed - a reasonable middle ground for a dashboard that
+// controls the firewall.
+let authToken = sessionStorage.getItem('sentinel_authToken') || null;
+let currentRole = sessionStorage.getItem('sentinel_role') || null;
+
+function persistSession() {
+  sessionStorage.setItem('sentinel_authToken', authToken || '');
+  sessionStorage.setItem('sentinel_role', currentRole || '');
+  sessionStorage.setItem('sentinel_apiBase', apiBase || '');
+}
+function clearSession() {
+  sessionStorage.removeItem('sentinel_authToken');
+  sessionStorage.removeItem('sentinel_role');
+  sessionStorage.removeItem('sentinel_apiBase');
+}
+
+// Seeds the dashboard's running counters from the server's all-time
+// totals, instead of starting at zero every time a tab connects. Called
+// on login and on restoring a session from sessionStorage.
+async function seedPacketStats() {
+  try {
+    const stats = await api('/packet-stats');
+    allowCount = stats.allow;
+    blockCount = stats.block;
+    alertCount = stats.alerts;
+    lastAllowSnapshot = allowCount;
+    lastBlockSnapshot = blockCount;
+    bumpStat('allowCount', allowCount);
+    bumpStat('blockCount', blockCount);
+    bumpStat('alertCount', alertCount);
+  } catch (e) {
+    // Non-fatal - counters just start at 0 and grow from live events,
+    // same as before this existed.
+  }
+}
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const feed = document.getElementById('feed');
