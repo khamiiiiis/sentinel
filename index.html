@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sentinel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+
+<div id="loginScreen">
+  <form class="login-card" id="loginForm">
+    <div class="wordmark"><span class="glyph"></span> SENTINEL</div>
+    <label for="apiBaseLogin">API base</label>
+    <input id="apiBaseLogin" value="https://best-discrimination-guaranteed-pictures.trycloudflare.com" />
+    <label for="username">Username</label>
+    <input id="username" name="username" autocomplete="username" value="khamis" />
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" value="23531532" />
+    <button class="primary" type="submit">Sign in</button>
+    <div class="login-error" id="loginError"></div>
+  </form>
+</div>
+
+<div id="appRoot">
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="wordmark"><span class="glyph"></span> SENTINEL</div>
+    <nav class="sidebar-nav">
+      <button id="dashboardBtn" class="nav-item active">Dashboard</button>
+      <button id="chartsBtn" class="nav-item">Charts</button>
+      <button id="idsBtn" class="nav-item">IDS</button>
+      <button id="nativeFwBtn" class="nav-item">Native Firewall</button>
+      <button id="logsBtn" class="nav-item">Logs</button>
+      <button id="statusBtn" class="nav-item">Device Status</button>
+      <button id="accountsBtn" class="nav-item" style="display:none;">Accounts</button>
+      <button id="myAccountBtn" class="nav-item">My Account</button>
+    </nav>
+  </aside>
+
+  <div class="content-area">
+    <div class="topbar">
+      <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">checking…</span></div>
+      <div class="status-group">
+        <button class="primary" id="startBtn">Start capture</button>
+        <button id="stopBtn">Stop</button>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+
+    <div class="api-config">
+      API base:
+      <input id="apiBase" value="http://127.0.0.1:8000" />
+      <button id="connectBtn">Connect</button>
+    </div>
+
+    <main>
+  <section>
+    <h2>Rules</h2>
+    <form class="add-rule" id="ruleForm" style="grid-template-columns: repeat(7, 1fr);">
+      <select name="action">
+        <option value="block">block</option>
+        <option value="allow">allow</option>
+      </select>
+      <select name="protocol">
+        <option value="">any proto</option>
+        <option value="tcp">tcp</option>
+        <option value="udp">udp</option>
+      </select>
+      <select name="direction">
+        <option value="">any dir</option>
+        <option value="outbound">outbound</option>
+        <option value="inbound">inbound</option>
+      </select>
+      <input name="src_ip" placeholder="src ip (opt)" />
+      <input name="src_port" placeholder="src port (opt)" type="number" />
+      <input name="dst_ip" placeholder="dst ip (opt)" />
+      <input name="dst_port" placeholder="dst port (opt)" type="number" />
+      <button type="submit" style="grid-column: span 7;">Add rule</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr><th>Action</th><th>Proto</th><th>Dir</th><th>Src IP</th><th>Src Port</th><th>Dst IP</th><th>Dst Port</th><th>On</th><th></th></tr>
+      </thead>
+      <tbody id="rulesBody">
+        <tr><td colspan="9" style="color:var(--text-dim)">No rules yet — add one above.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top:28px;">Display exclusions</h2>
+    <form class="add-rule" id="exclusionForm" style="grid-template-columns: repeat(5, 1fr);">
+      <select name="protocol">
+        <option value="">any proto</option>
+        <option value="tcp">tcp</option>
+        <option value="udp">udp</option>
+      </select>
+      <select name="direction">
+        <option value="">any dir</option>
+        <option value="outbound">outbound</option>
+        <option value="inbound">inbound</option>
+      </select>
+      <input name="dst_ip" placeholder="dst ip (opt)" />
+      <input name="dst_port" placeholder="dst port (opt)" type="number" />
+      <input name="src_port" placeholder="src port (opt)" type="number" />
+      <button type="submit" style="grid-column: span 5;">Add exclusion</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr><th>Proto</th><th>Dir</th><th>Dst IP</th><th>Dst Port</th><th>Src Port</th><th>On</th><th></th></tr>
+      </thead>
+      <tbody id="exclusionsBody">
+        <tr><td colspan="7" style="color:var(--text-dim)">No exclusions yet.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="live-traffic-panel">
+    <h2>Live traffic</h2>
+    <div class="feed-filters">
+      <select id="filterAction">
+        <option value="all">All actions</option>
+        <option value="allow">Allow</option>
+        <option value="block">Block</option>
+      </select>
+      <select id="filterProtocol">
+        <option value="all">All protocols</option>
+        <option value="tcp">TCP</option>
+        <option value="udp">UDP</option>
+      </select>
+      <select id="filterDirection">
+        <option value="all">All directions</option>
+        <option value="outbound">Outbound</option>
+        <option value="inbound">Inbound</option>
+      </select>
+      <label class="filter-check"><input type="checkbox" id="filterAlertsOnly" /> Alerts only</label>
+      <input id="filterPort" placeholder="port" type="number" style="max-width:100px;" />
+      <input id="filterSearch" placeholder="search ip:port/app…" />
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+    <div id="feed"><div class="empty">Waiting for events… start capture and connect above.</div></div>
+  </section>
+</main>
+
+<section id="accountsPanel" style="display:none;">
+  <h2>Accounts</h2>
+  <form class="add-rule" id="accountForm" style="grid-template-columns: repeat(4, 1fr);">
+    <input name="username" placeholder="username" required />
+    <input name="password" type="password" placeholder="password" required />
+    <select name="role">
+      <option value="viewer">viewer</option>
+      <option value="operator">operator</option>
+      <option value="admin">admin</option>
+    </select>
+    <button type="submit" style="grid-column: span 1;">Add account</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr><th>Username</th><th>Role</th><th>Enabled</th><th>New password</th><th></th></tr>
+    </thead>
+    <tbody id="accountsBody">
+      <tr><td colspan="5" style="color:var(--text-dim)">No accounts loaded.</td></tr>
+    </tbody>
+  </table>
+  <div class="login-error" id="accountsError"></div>
+</section>
+
+<section id="idsPanel" style="display:none;">
+  <h2>Rules</h2>
+  <form class="add-rule" id="ruleFormIds" style="grid-template-columns: repeat(7, 1fr);">
+    <select name="action">
+      <option value="block">block</option>
+      <option value="allow">allow</option>
+    </select>
+    <select name="protocol">
+      <option value="">any proto</option>
+      <option value="tcp">tcp</option>
+      <option value="udp">udp</option>
+    </select>
+    <select name="direction">
+      <option value="">any dir</option>
+      <option value="outbound">outbound</option>
+      <option value="inbound">inbound</option>
+    </select>
+    <input name="src_ip" placeholder="src ip (opt)" />
+    <input name="src_port" placeholder="src port (opt)" type="number" />
+    <input name="dst_ip" placeholder="dst ip (opt)" />
+    <input name="dst_port" placeholder="dst port (opt)" type="number" />
+    <button type="submit" style="grid-column: span 7;">Add rule</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr><th>Action</th><th>Proto</th><th>Dir</th><th>Src IP</th><th>Src Port</th><th>Dst IP</th><th>Dst Port</th><th>On</th><th></th></tr>
+    </thead>
+    <tbody id="rulesBodyIds">
+      <tr><td colspan="9" style="color:var(--text-dim)">No rules yet — add one above.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:32px;">Intrusion Detection</h2>
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+    <button id="refreshAlertsBtn">Refresh</button>
+    <button id="clearAlertsBtn" style="display:none;">Clear history</button>
+  </div>
+
+  <div class="feed-filters">
+    <select id="idsFilterSeverity">
+      <option value="all">All severities</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <select id="idsFilterType">
+      <option value="all">All types</option>
+      <option value="signature">Signature</option>
+      <option value="anomaly">Anomaly</option>
+    </select>
+    <input id="idsFilterPort" placeholder="port" type="number" style="max-width:100px;" />
+    <input id="idsFilterSearch" placeholder="search name/ip…" />
+    <span class="filter-count" id="idsFilterCount"></span>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Time</th><th>Severity</th><th>Name</th><th>Type</th><th>Src</th><th>Dst</th><th>Proto</th><th>App</th><th>Detail</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="alertsBody">
+      <tr><td colspan="10" style="color:var(--text-dim)">No alerts yet.</td></tr>
+    </tbody>
+  </table>
+  <div class="login-error" id="idsError"></div>
+</section>
+
+<section id="nativeFwPanel" style="display:none;">
+  <h2>Native Windows Firewall</h2>
+  <p style="color:var(--text-dim); font-family: var(--mono); font-size: 12.5px; margin-top:-8px;">
+    
+  </p>
+
+  <h3 style="font-family:var(--mono); font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:20px 0 10px;">port / IP Rules</h3>
+  <form class="add-rule" id="nativePortForm" style="grid-template-columns: repeat(6, 1fr);">
+    <select name="direction">
+      <option value="out">outbound</option>
+      <option value="in">inbound</option>
+    </select>
+    <select name="action">
+      <option value="block">block</option>
+      <option value="allow">allow</option>
+    </select>
+    <select name="protocol">
+      <option value="">any proto</option>
+      <option value="TCP">TCP</option>
+      <option value="UDP">UDP</option>
+    </select>
+    <input name="local_port" placeholder="local port (opt)" type="number" />
+    <input name="remote_ip" placeholder="remote ip (opt)" />
+    <button type="submit">Add rule</button>
+  </form>
+
+  <h3 style="font-family:var(--mono); font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:20px 0 10px;">applications rules</h3>
+  <form class="add-rule" id="nativeAppForm" style="grid-template-columns: 1fr 1fr 2fr 1fr;">
+    <select name="direction">
+      <option value="out">outbound</option>
+      <option value="in">inbound</option>
+    </select>
+    <select name="action">
+      <option value="block">block</option>
+      <option value="allow">allow</option>
+    </select>
+    <select id="processPicker">
+      <option value="">Pick a running process…</option>
+    </select>
+    <input id="programPathInput" placeholder="or paste full .exe path" style="grid-column: span 3;" />
+    <button type="submit">Add app rule</button>
+    <button type="button" id="refreshProcessesBtn">Refresh list</button>
+  </form>
+
+  <table style="margin-top:20px;">
+    <thead>
+      <tr><th>Type</th><th>Dir</th><th>Action</th><th>Proto</th><th>Port</th><th>Remote IP</th><th>Program</th><th>On</th><th></th></tr>
+    </thead>
+    <tbody id="nativeRulesBody">
+      <tr><td colspan="9" style="color:var(--text-dim)">No native firewall rules yet.</td></tr>
+    </tbody>
+  </table>
+  <div class="login-error" id="nativeFwError"></div>
+</section>
+
+<section id="chartsPanel" style="display:none;">
+  <h2>Traffic charts</h2>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Allowed vs blocked (per 2s)</h3>
+      <canvas id="rateChart" height="340"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Protocol split</h3>
+      <canvas id="protocolChart" height="340"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Alert severity</h3>
+      <canvas id="severityChart" height="340"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Firewall actions</h3>
+      <canvas id="actionsChart" height="340"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Top source IPs</h3>
+      <canvas id="topSrcChart" height="340"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Top destination IPs</h3>
+      <canvas id="topDstChart" height="340"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Firewall rule hits</h3>
+      <canvas id="ruleHitsChart" height="340"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Alert types distribution</h3>
+      <canvas id="alertTypesChart" height="340"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Top applications (all directions)</h3>
+      <canvas id="topAppsChart" height="340"></canvas>
+    </div>
+  </div>
+</section>
+
+<section id="logsPanel" style="display:none;">
+  <h2>Display exclusions</h2>
+  <form class="add-rule" id="exclusionFormLogs" style="grid-template-columns: repeat(5, 1fr);">
+    <select name="protocol">
+      <option value="">any proto</option>
+      <option value="tcp">tcp</option>
+      <option value="udp">udp</option>
+    </select>
+    <select name="direction">
+      <option value="">any dir</option>
+      <option value="outbound">outbound</option>
+      <option value="inbound">inbound</option>
+    </select>
+    <input name="dst_ip" placeholder="dst ip (opt)" />
+    <input name="dst_port" placeholder="dst port (opt)" type="number" />
+    <input name="src_port" placeholder="src port (opt)" type="number" />
+    <button type="submit" style="grid-column: span 5;">Add exclusion</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr><th>Proto</th><th>Dir</th><th>Dst IP</th><th>Dst Port</th><th>Src Port</th><th>On</th><th></th></tr>
+    </thead>
+    <tbody id="exclusionsBodyLogs">
+      <tr><td colspan="7" style="color:var(--text-dim)">No exclusions yet.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:32px;">Packet history</h2>
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+    <button id="refreshPacketsBtn">Refresh</button>
+    <button id="clearPacketsBtn" style="display:none;">Clear history</button>
+  </div>
+  <div class="feed-filters">
+    <select id="pktFilterAction">
+      <option value="all">All actions</option>
+      <option value="allow">Allow</option>
+      <option value="block">Block</option>
+    </select>
+    <select id="pktFilterProtocol">
+      <option value="all">All protocols</option>
+      <option value="tcp">TCP</option>
+      <option value="udp">UDP</option>
+    </select>
+    <select id="pktFilterDirection">
+      <option value="all">All directions</option>
+      <option value="outbound">Outbound</option>
+      <option value="inbound">Inbound</option>
+    </select>
+    <input id="pktFilterPort" placeholder="port" type="number" style="max-width:100px;" />
+    <input id="pktFilterSearch" placeholder="search ip:port/app…" />
+    <span class="filter-count" id="pktFilterCount"></span>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Time</th><th>Action</th><th>Protocol</th><th>Src</th><th>Dst</th><th>Direction</th><th>App</th></tr>
+    </thead>
+    <tbody id="packetsBody">
+      <tr><td colspan="7" style="color:var(--text-dim)">No packet history yet.</td></tr>
+    </tbody>
+  </table>
+  <div class="login-error" id="packetsError"></div>
+
+  <h2 style="margin-top:32px;">Audit log</h2>
+  <p style="color:var(--text-dim); font-family: var(--mono); font-size: 12.5px; margin-top:-8px;">
+    Account changes and login attempts. Admin only.
+  </p>
+  <div id="auditAdminOnly" style="display:none;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+      <button id="refreshAuditBtn">Refresh</button>
+      <button id="clearAuditBtn">Clear log</button>
+    </div>
+    <div class="feed-filters">
+      <select id="auditFilterType">
+        <option value="all">All events</option>
+        <option value="login_success">Login success</option>
+        <option value="login_failed">Login failed</option>
+        <option value="logout">Logout</option>
+        <option value="account_created">Account created</option>
+        <option value="account_renamed">Account renamed</option>
+        <option value="account_updated">Account updated</option>
+        <option value="account_password_changed">Password changed</option>
+        <option value="account_deleted">Account deleted</option>
+      </select>
+      <input id="auditFilterSearch" placeholder="search actor/target…" />
+      <span class="filter-count" id="auditFilterCount"></span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Event</th><th>Actor</th><th>Target</th><th>Detail</th></tr>
+      </thead>
+      <tbody id="auditBody">
+        <tr><td colspan="5" style="color:var(--text-dim)">No audit events yet.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="auditNotAdmin" style="color:var(--text-dim); font-family: var(--mono); font-size: 12.5px;">
+    You need admin access to view the audit log.
+  </div>
+  <div class="login-error" id="auditError"></div>
+</section>
+
+<section id="myAccountPanel" style="display:none;">
+  <h2>My account</h2>
+  <p style="color:var(--text-dim); font-family: var(--mono); font-size: 12.5px; margin-top:-8px;">
+    
+  </p>
+  <form id="changePasswordForm" style="max-width: 340px;">
+    <label class="pw-label" for="oldPassword">Current password</label>
+    <input id="oldPassword" type="password" required autocomplete="current-password" />
+
+    <label class="pw-label" for="newPassword">New password</label>
+    <input id="newPassword" type="password" required autocomplete="new-password" />
+
+    <label class="pw-label" for="confirmPassword">Confirm new password</label>
+    <input id="confirmPassword" type="password" required autocomplete="new-password" />
+
+    <button class="primary" type="submit" style="width:100%; margin-top:18px;">Change password</button>
+    <div class="login-error" id="changePasswordError"></div>
+    <div id="changePasswordSuccess" style="color:var(--allow); font-family:var(--mono); font-size:12px; margin-top:10px; display:none;">
+      Password changed successfully.
+    </div>
+  </form>
+</section>
+
+<section id="statusPanel" style="display:none;">
+  <h2>Device status</h2>
+  <p style="color:var(--text-dim); font-family: var(--mono); font-size: 12.5px; margin-top:-8px;">
+    
+  </p>
+
+  <div class="status-grid">
+    <div class="status-card">
+      <h3>CPU</h3>
+      <div class="status-percent" id="cpuPercent">—</div>
+      <div class="status-bar"><div class="status-bar-fill" id="cpuBarFill"></div></div>
+      <div class="status-sub" id="cpuSub"></div>
+    </div>
+    <div class="status-card">
+      <h3>Memory</h3>
+      <div class="status-percent" id="memPercent">—</div>
+      <div class="status-bar"><div class="status-bar-fill" id="memBarFill"></div></div>
+      <div class="status-sub" id="memSub"></div>
+    </div>
+    <div class="status-card">
+      <h3>Disk</h3>
+      <div class="status-percent" id="diskPercent">—</div>
+      <div class="status-bar"><div class="status-bar-fill" id="diskBarFill"></div></div>
+      <div class="status-sub" id="diskSub"></div>
+    </div>
+  </div>
+  <div class="login-error" id="statusError"></div>
+</section>
+
+<div class="stats">
+  <div class="stat allow"><div class="num" id="allowCount">0</div><div class="label">Allowed</div></div>
+  <div class="stat block"><div class="num" id="blockCount">0</div><div class="label">Blocked</div></div>
+  <div class="stat alert"><div class="num" id="alertCount">0</div><div class="label">IDS Alerts</div></div>
+</div>
+  </div><!-- /content-area -->
+</div><!-- /app-shell -->
+</div><!-- /appRoot -->
+
+
+<!--
+  Loaded as plain scripts (not ES modules) sharing one global scope,
+  same as the original single-file version - this keeps every existing
+  cross-reference between functions working with zero rewriting, while
+  still giving each concern its own file. Order matters: each file may
+  use functions/variables declared in files listed before it.
+-->
+<script src="js/utils.js"></script>
+<script src="js/state.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/navigation.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/websocket.js"></script>
+<script src="js/pages/rules.js"></script>
+<script src="js/pages/exclusions.js"></script>
+<script src="js/pages/native-firewall.js"></script>
+<script src="js/pages/logs.js"></script>
+<script src="js/pages/ids.js"></script>
+<script src="js/pages/accounts.js"></script>
+<script src="js/pages/status.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
