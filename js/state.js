@@ -50,18 +50,9 @@ const accountsBody = document.getElementById('accountsBody');
 let editingRuleId = null; // id of the rule currently shown in edit mode, if any
 let lastLoadedRules = [];
 let wsConnectionGeneration = 0;
-// --- chart data ---
-const protocolCounts = { tcp: 0, udp: 0 };
-const severityCounts = { high: 0, medium: 0, low: 0 };
-const srcIpCounts = {};
-const dstIpCounts = {};
-const ruleHitCounts = {};   // rule_id (string) or 'none' -> count
-const alertNameCounts = {}; // signature/anomaly name -> count
-const appPacketCounts = {}; // app/process name -> packet count, both directions combined
-const rateHistory = []; // [{label, allow, block}] - one point per sample interval
-const RATE_HISTORY_MAX_POINTS = 30;
-let lastAllowSnapshot = 0, lastBlockSnapshot = 0;
-let chartsInitialized = false;
+// Chart data itself now lives in charts.js (chartData), fetched from
+// GET /chart-data - the database is the source of truth for charts,
+// not a live-session-only counter kept here.
 // Live traffic keeps growing forever otherwise, which makes the DOM
 // heavier over time and shows up as layout lag (e.g. on window resize).
 // Trim to the most recent N lines.
