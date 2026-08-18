@@ -40,6 +40,7 @@ async function loadExclusions() {
 }
 async function handleExclusionFormSubmit(e) {
   e.preventDefault();
+  if (!validateForm(e.target)) return;
   const fd = new FormData(e.target);
   const body = {
     protocol: fd.get('protocol') || null,

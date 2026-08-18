@@ -15,11 +15,11 @@
   <form class="login-card" id="loginForm">
     <div class="wordmark"><span class="glyph"></span> SENTINEL</div>
     <label for="apiBaseLogin">API base</label>
-    <input id="apiBaseLogin" value="" />
+    <input id="apiBaseLogin" value="https://jpg-derby-east-flexibility.trycloudflare.com" />
     <label for="username">Username</label>
-    <input id="username" name="username" autocomplete="username" value="admin" />
+    <input id="username" name="username" autocomplete="username" value="khamis" />
     <label for="password">Password</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" value="sentinel" />
+    <input id="password" name="password" type="password" autocomplete="current-password" value="23531532" />
     <button class="primary" type="submit">Sign in</button>
     <div class="login-error" id="loginError"></div>
   </form>
@@ -75,12 +75,13 @@
         <option value="outbound">outbound</option>
         <option value="inbound">inbound</option>
       </select>
-      <input name="src_ip" placeholder="src ip (opt)" />
-      <input name="src_port" placeholder="src port (opt)" type="number" />
-      <input name="dst_ip" placeholder="dst ip (opt)" />
-      <input name="dst_port" placeholder="dst port (opt)" type="number" />
+      <input name="src_ip" placeholder="src ip (opt)" data-validate="ip" />
+      <input name="src_port" placeholder="src port (opt)" type="number" min="1" max="65535" data-validate="port" />
+      <input name="dst_ip" placeholder="dst ip (opt)" data-validate="ip" />
+      <input name="dst_port" placeholder="dst port (opt)" type="number" min="1" max="65535" data-validate="port" />
       <button type="submit" style="grid-column: span 7;">Add rule</button>
     </form>
+    <div class="form-error" id="ruleFormError"></div>
 
     <table>
       <thead>
@@ -103,11 +104,12 @@
         <option value="outbound">outbound</option>
         <option value="inbound">inbound</option>
       </select>
-      <input name="dst_ip" placeholder="dst ip (opt)" />
-      <input name="dst_port" placeholder="dst port (opt)" type="number" />
-      <input name="src_port" placeholder="src port (opt)" type="number" />
+      <input name="dst_ip" placeholder="dst ip (opt)" data-validate="ip" />
+      <input name="dst_port" placeholder="dst port (opt)" type="number" min="1" max="65535" data-validate="port" />
+      <input name="src_port" placeholder="src port (opt)" type="number" min="1" max="65535" data-validate="port" />
       <button type="submit" style="grid-column: span 5;">Add exclusion</button>
     </form>
+    <div class="form-error" id="exclusionFormError"></div>
 
     <table>
       <thead>
@@ -138,8 +140,8 @@
         <option value="inbound">Inbound</option>
       </select>
       <label class="filter-check"><input type="checkbox" id="filterAlertsOnly" /> Alerts only</label>
-      <input id="filterPort" placeholder="port" type="number" style="max-width:100px;" />
-      <input id="filterSearch" placeholder="search ip:port/app…" />
+      <input id="filterPort" placeholder="port" type="number" min="1" max="65535" style="max-width:100px;" data-validate="port" />
+      <input id="filterSearch" placeholder="search ip:port/app…" data-validate="safe-text" />
       <span class="filter-count" id="filterCount"></span>
     </div>
     <div id="feed"><div class="empty">Waiting for events… start capture and connect above.</div></div>
@@ -149,7 +151,7 @@
 <section id="accountsPanel" style="display:none;">
   <h2>Accounts</h2>
   <form class="add-rule" id="accountForm" style="grid-template-columns: repeat(4, 1fr);">
-    <input name="username" placeholder="username" required />
+    <input name="username" placeholder="username" data-validate="username" required />
     <input name="password" type="password" placeholder="password" required />
     <select name="role">
       <option value="viewer">viewer</option>
@@ -187,12 +189,13 @@
       <option value="outbound">outbound</option>
       <option value="inbound">inbound</option>
     </select>
-    <input name="src_ip" placeholder="src ip (opt)" />
-    <input name="src_port" placeholder="src port (opt)" type="number" />
-    <input name="dst_ip" placeholder="dst ip (opt)" />
-    <input name="dst_port" placeholder="dst port (opt)" type="number" />
+    <input name="src_ip" placeholder="src ip (opt)" data-validate="ip" />
+    <input name="src_port" placeholder="src port (opt)" type="number" min="1" max="65535" data-validate="port" />
+    <input name="dst_ip" placeholder="dst ip (opt)" data-validate="ip" />
+    <input name="dst_port" placeholder="dst port (opt)" type="number" min="1" max="65535" data-validate="port" />
     <button type="submit" style="grid-column: span 7;">Add rule</button>
   </form>
+  <div class="form-error" id="ruleFormIdsError"></div>
 
   <table>
     <thead>
@@ -221,8 +224,8 @@
       <option value="signature">Signature</option>
       <option value="anomaly">Anomaly</option>
     </select>
-    <input id="idsFilterPort" placeholder="port" type="number" style="max-width:100px;" />
-    <input id="idsFilterSearch" placeholder="search name/ip…" />
+    <input id="idsFilterPort" placeholder="port" type="number" min="1" max="65535" style="max-width:100px;" data-validate="port" />
+    <input id="idsFilterSearch" placeholder="search name/ip…" data-validate="safe-text" />
     <span class="filter-count" id="idsFilterCount"></span>
   </div>
 
@@ -258,8 +261,8 @@
       <option value="TCP">TCP</option>
       <option value="UDP">UDP</option>
     </select>
-    <input name="local_port" placeholder="local port (opt)" type="number" />
-    <input name="remote_ip" placeholder="remote ip (opt)" />
+    <input name="local_port" placeholder="local port (opt)" type="number" min="1" max="65535" data-validate="port" />
+    <input name="remote_ip" placeholder="remote ip (opt)" data-validate="ip" />
     <button type="submit">Add rule</button>
   </form>
 
@@ -276,7 +279,7 @@
     <select id="processPicker">
       <option value="">Pick a running process…</option>
     </select>
-    <input id="programPathInput" placeholder="or paste full .exe path" style="grid-column: span 3;" />
+    <input id="programPathInput" placeholder="or paste full .exe path" style="grid-column: span 3;" data-validate="program-path" />
     <button type="submit">Add app rule</button>
     <button type="button" id="refreshProcessesBtn">Refresh list</button>
   </form>
@@ -347,11 +350,12 @@
       <option value="outbound">outbound</option>
       <option value="inbound">inbound</option>
     </select>
-    <input name="dst_ip" placeholder="dst ip (opt)" />
-    <input name="dst_port" placeholder="dst port (opt)" type="number" />
-    <input name="src_port" placeholder="src port (opt)" type="number" />
+    <input name="dst_ip" placeholder="dst ip (opt)" data-validate="ip" />
+    <input name="dst_port" placeholder="dst port (opt)" type="number" min="1" max="65535" data-validate="port" />
+    <input name="src_port" placeholder="src port (opt)" type="number" min="1" max="65535" data-validate="port" />
     <button type="submit" style="grid-column: span 5;">Add exclusion</button>
   </form>
+  <div class="form-error" id="exclusionFormLogsError"></div>
 
   <table>
     <thead>
@@ -383,8 +387,8 @@
       <option value="outbound">Outbound</option>
       <option value="inbound">Inbound</option>
     </select>
-    <input id="pktFilterPort" placeholder="port" type="number" style="max-width:100px;" />
-    <input id="pktFilterSearch" placeholder="search ip:port/app…" />
+    <input id="pktFilterPort" placeholder="port" type="number" min="1" max="65535" style="max-width:100px;" data-validate="port" />
+    <input id="pktFilterSearch" placeholder="search ip:port/app…" data-validate="safe-text" />
     <span class="filter-count" id="pktFilterCount"></span>
   </div>
   <table>
@@ -418,7 +422,7 @@
         <option value="account_password_changed">Password changed</option>
         <option value="account_deleted">Account deleted</option>
       </select>
-      <input id="auditFilterSearch" placeholder="search actor/target…" />
+      <input id="auditFilterSearch" placeholder="search actor/target…" data-validate="safe-text" />
       <span class="filter-count" id="auditFilterCount"></span>
     </div>
     <table>
@@ -505,6 +509,7 @@
   still giving each concern its own file. Order matters: each file may
   use functions/variables declared in files listed before it.
 -->
+<script src="js/validation.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/state.js"></script>
 <script src="js/auth.js"></script>

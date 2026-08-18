@@ -28,10 +28,10 @@ function renderRules(rules) {
                   <option value="inbound" ${r.direction === 'inbound' ? 'selected' : ''}>inbound</option>
                 </select>
               </td>
-              <td><input class="edit-src-ip" value="${escapeHtml(r.src_ip || '')}" placeholder="src ip" /></td>
-              <td><input class="edit-src-port" type="number" value="${r.src_port ?? ''}" placeholder="src port" /></td>
-              <td><input class="edit-dst-ip" value="${escapeHtml(r.dst_ip || '')}" placeholder="dst ip" /></td>
-              <td><input class="edit-dst-port" type="number" value="${r.dst_port ?? ''}" placeholder="dst port" /></td>
+              <td><input class="edit-src-ip" value="${escapeHtml(r.src_ip || '')}" placeholder="src ip" data-validate="ip" /></td>
+              <td><input class="edit-src-port" type="number" min="1" max="65535" value="${r.src_port ?? ''}" placeholder="src port" data-validate="port" /></td>
+              <td><input class="edit-dst-ip" value="${escapeHtml(r.dst_ip || '')}" placeholder="dst ip" data-validate="ip" /></td>
+              <td><input class="edit-dst-port" type="number" min="1" max="65535" value="${r.dst_port ?? ''}" placeholder="dst port" data-validate="port" /></td>
               <td><input type="checkbox" class="edit-enabled" ${r.enabled ? 'checked' : ''} /></td>
               <td>
                 <button class="icon-btn save-rule-btn" title="Save changes">💾</button>
@@ -83,6 +83,7 @@ function renderRules(rules) {
     tbody.querySelectorAll('.save-rule-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const row = btn.closest('tr');
+        if (!validateForm(row)) return;
         const id2 = row.dataset.id;
         const body = {
           action: row.querySelector('.edit-action').value,
@@ -118,6 +119,7 @@ async function loadRules() {
 }
 async function handleRuleFormSubmit(e) {
   e.preventDefault();
+  if (!validateForm(e.target)) return;
   const fd = new FormData(e.target);
   const body = {
     action: fd.get('action'),

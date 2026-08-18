@@ -7,7 +7,7 @@ function renderAccounts(accounts) {
   }
   accountsBody.innerHTML = accounts.map(a => `
     <tr data-username="${escapeHtml(a.username)}">
-      <td><input type="text" class="username-input" value="${escapeHtml(a.username)}" /></td>
+      <td><input type="text" class="username-input" value="${escapeHtml(a.username)}" data-validate="username" /></td>
       <td>
         <select class="role-select">
           <option value="viewer" ${a.role === 'viewer' ? 'selected' : ''}>viewer</option>
@@ -28,6 +28,7 @@ function renderAccounts(accounts) {
     const username = row.dataset.username;
 
     row.querySelector('.save-btn').addEventListener('click', async () => {
+      if (!validateForm(row)) return;
       const newUsername = row.querySelector('.username-input').value.trim();
       const role = row.querySelector('.role-select').value;
       const enabled = row.querySelector('.enabled-check').checked;
@@ -68,6 +69,7 @@ async function loadAccounts() {
 
 document.getElementById('accountForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!validateForm(e.target)) return;
   const fd = new FormData(e.target);
   const body = {
     username: fd.get('username'),

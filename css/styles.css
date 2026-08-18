@@ -699,3 +699,21 @@
   .login-error:empty { opacity: 0; }
   #appRoot { display: none; height: 100vh; animation: fadeIn 0.4s var(--ease-out); }
 
+  .field-invalid { border-color: var(--block) !important; outline: none; }
+  .field-error-msg {
+    color: var(--block);
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-top: 2px;
+    min-height: 0;
+  }
+  .field-error-msg:empty { display: none; }
+  .form-error {
+    color: var(--block);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 6px 0;
+    min-height: 16px;
+  }
+  .form-error:empty { display: none; }
+

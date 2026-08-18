@@ -75,6 +75,7 @@ async function loadNativeRules() {
 
 document.getElementById('nativePortForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!validateForm(e.target)) return;
   const fd = new FormData(e.target);
   const body = {
     rule_type: 'port',
@@ -96,6 +97,7 @@ document.getElementById('nativePortForm').addEventListener('submit', async (e) =
 
 document.getElementById('nativeAppForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!validateForm(e.target)) return;
   const fd = new FormData(e.target);
   const programPath = document.getElementById('programPathInput').value.trim();
   if (!programPath) {
