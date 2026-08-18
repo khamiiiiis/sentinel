@@ -15,7 +15,7 @@
   <form class="login-card" id="loginForm">
     <div class="wordmark"><span class="glyph"></span> SENTINEL</div>
     <label for="apiBaseLogin">API base</label>
-    <input id="apiBaseLogin" value="" />
+    <input id="apiBaseLogin" value="http://127.0.0.1:8000" />
     <label for="username">Username</label>
     <input id="username" name="username" autocomplete="username" value="admin" />
     <label for="password">Password</label>
@@ -27,8 +27,7 @@
 
 <div id="appRoot">
 <div class="app-shell">
-  <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar">
     <div class="wordmark"><span class="glyph"></span> SENTINEL</div>
     <nav class="sidebar-nav">
       <button id="dashboardBtn" class="nav-item active">Dashboard</button>
@@ -44,9 +43,6 @@
 
   <div class="content-area">
     <div class="topbar">
-      <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open menu">
-        <span></span><span></span><span></span>
-      </button>
       <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">checking…</span></div>
       <div class="status-group">
         <button class="primary" id="startBtn">Start capture</button>

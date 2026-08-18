@@ -33,7 +33,23 @@ async function connectWebSocket() {
     const filters = currentFilters(); // read the filter controls ONCE per batch, not once per packet
     batch.forEach(event => {
       if (event.action === 'block') blockCount++; else if (event.action === 'allow') allowCount++;
-      if (event.alerts && event.alerts.length) alertCount += event.alerts.length;
+      if (event.protocol === 'tcp') protocolCounts.tcp++;
+      else if (event.protocol === 'udp') protocolCounts.udp++;
+      if (event.alerts && event.alerts.length) {
+        alertCount += event.alerts.length;
+        event.alerts.forEach(a => {
+          if (severityCounts[a.severity] !== undefined) severityCounts[a.severity]++;
+          alertNameCounts[a.name] = (alertNameCounts[a.name] || 0) + 1;
+        });
+      }
+      const srcIp = extractIp(event.src);
+      const dstIp = extractIp(event.dst);
+      if (srcIp) srcIpCounts[srcIp] = (srcIpCounts[srcIp] || 0) + 1;
+      if (dstIp) dstIpCounts[dstIp] = (dstIpCounts[dstIp] || 0) + 1;
+      const ruleKey = event.rule_id != null ? String(event.rule_id) : 'none';
+      ruleHitCounts[ruleKey] = (ruleHitCounts[ruleKey] || 0) + 1;
+      const appKey = event.app_name || 'Unknown';
+      appPacketCounts[appKey] = (appPacketCounts[appKey] || 0) + 1;
       appendFeedLine(event, filters);
     });
     bumpStat('allowCount', allowCount);

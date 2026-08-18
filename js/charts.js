@@ -1,32 +1,22 @@
 // Sentinel - all canvas-drawn charts on the Charts page. No external
 // charting library - drawn directly so the app has zero network
-// dependency for rendering (beyond the app's own API).
-//
-// Every chart is fed from GET /chart-data, which aggregates the
-// packets/alerts tables in the database. That means charts reflect
-// full history - including traffic captured before this tab
-// connected, or by a different browser session entirely - instead
-// of resetting to empty on every page load and only growing from
-// events seen live.
+// dependency for rendering.
 
-let chartData = null; // last successful /chart-data response
-
-async function fetchChartData() {
-  try {
-    chartData = await api('/chart-data');
-  } catch (e) {
-    // Leave chartData as whatever we last had (or null) - draw
-    // functions already treat missing/empty data as "nothing yet".
-  }
+function sampleRate() {
+  const deltaAllow = allowCount - lastAllowSnapshot;
+  const deltaBlock = blockCount - lastBlockSnapshot;
+  lastAllowSnapshot = allowCount;
+  lastBlockSnapshot = blockCount;
+  rateHistory.push({ label: new Date().toLocaleTimeString(), allow: deltaAllow, block: deltaBlock });
+  while (rateHistory.length > RATE_HISTORY_MAX_POINTS) rateHistory.shift();
 }
-
 setInterval(() => {
+  sampleRate();
   if (chartsPanel.style.display !== 'none') updateCharts();
 }, 2000);
 
 function initChartsIfNeeded() {
-  // No setup needed ahead of time - updateCharts() fetches fresh data
-  // and draws from scratch every time the Charts page is shown.
+  chartsInitialized = true; // drawing happens fresh in updateCharts(), nothing to set up ahead of time
 }
 
 // Sizes a canvas to its container at the browser's actual pixel density,
@@ -59,7 +49,6 @@ function drawRateChart() {
   const plotW = width - padL - padR;
   const plotH = height - padT - padB;
 
-  const rateHistory = (chartData && chartData.rate_history) || [];
   if (!rateHistory.length) {
     ctx.fillStyle = '#8891A3';
     ctx.font = '12px IBM Plex Mono, monospace';
@@ -118,7 +107,6 @@ function drawRateChart() {
 function drawProtocolChart() {
   const { ctx, width, height } = prepareCanvas(document.getElementById('protocolChart'), 340);
   const cx = width / 2, cy = height / 2 - 6, r = Math.min(width, height) / 2 - 30;
-  const protocolCounts = (chartData && chartData.protocol) || { tcp: 0, udp: 0 };
   const total = protocolCounts.tcp + protocolCounts.udp;
 
   if (total === 0) {
@@ -173,7 +161,6 @@ function drawSeverityChart() {
   const plotW = width - padL - padR;
   const plotH = height - padT - padB;
 
-  const severityCounts = (chartData && chartData.severity) || { high: 0, medium: 0, low: 0 };
   const bars = [
     { label: 'High', value: severityCounts.high, color: '#E5677A' },
     { label: 'Medium', value: severityCounts.medium, color: '#E8A33D' },
@@ -215,8 +202,7 @@ function drawSeverityChart() {
 function drawFirewallActionsChart() {
   const { ctx, width, height } = prepareCanvas(document.getElementById('actionsChart'), 340);
   const cx = width / 2, cy = height / 2 - 6, r = Math.min(width, height) / 2 - 30;
-  const actions = (chartData && chartData.actions) || { allow: 0, block: 0 };
-  const total = actions.allow + actions.block;
+  const total = allowCount + blockCount;
 
   if (total === 0) {
     ctx.strokeStyle = 'rgba(255,255,255,0.1)';
@@ -233,8 +219,8 @@ function drawFirewallActionsChart() {
   }
 
   const segments = [
-    { value: actions.allow, color: '#3FB68C', label: 'Allowed' },
-    { value: actions.block, color: '#E5677A', label: 'Blocked' },
+    { value: allowCount, color: '#3FB68C', label: 'Allowed' },
+    { value: blockCount, color: '#E5677A', label: 'Blocked' },
   ];
   let start = -Math.PI / 2;
   ctx.lineWidth = 18;
@@ -303,13 +289,11 @@ function drawHorizontalBarChart(canvasId, items, colorForIndex, emptyMessage) {
 }
 
 function drawTopSrcChart() {
-  const items = (chartData && chartData.top_src) || [];
-  drawHorizontalBarChart('topSrcChart', items, () => '#3FB68C', 'No traffic yet');
+  drawHorizontalBarChart('topSrcChart', topNFromCounts(srcIpCounts), () => '#3FB68C', 'No traffic yet');
 }
 
 function drawTopDstChart() {
-  const items = (chartData && chartData.top_dst) || [];
-  drawHorizontalBarChart('topDstChart', items, () => '#E8A33D', 'No traffic yet');
+  drawHorizontalBarChart('topDstChart', topNFromCounts(dstIpCounts), () => '#E8A33D', 'No traffic yet');
 }
 
 function ruleLabel(ruleKey) {
@@ -326,8 +310,7 @@ function ruleActionFor(ruleKey) {
 }
 
 function drawRuleHitsChart() {
-  const raw = (chartData && chartData.rule_hits) || [];
-  const items = raw.map(item => ({
+  const items = topNFromCounts(ruleHitCounts).map(item => ({
     label: ruleLabel(item.label),
     value: item.value,
     action: ruleActionFor(item.label),
@@ -338,18 +321,18 @@ function drawRuleHitsChart() {
 }
 
 function drawAlertTypesChart() {
-  const items = (chartData && chartData.alert_types) || [];
+  const items = topNFromCounts(alertNameCounts);
   const palette = ['#E5677A', '#E8A33D', '#3FB68C', '#8891A3', '#5B8DEF'];
   drawHorizontalBarChart('alertTypesChart', items, (item, i) => palette[i % palette.length], 'No alerts yet');
 }
 
 function drawTopAppsChart() {
-  const items = (chartData && chartData.top_apps) || [];
+  const items = topNFromCounts(appPacketCounts);
   drawHorizontalBarChart('topAppsChart', items, () => '#5B8DEF', 'No traffic yet');
 }
 
-async function updateCharts() {
-  await fetchChartData();
+function updateCharts() {
+  if (!chartsInitialized) return;
   drawRateChart();
   drawProtocolChart();
   drawSeverityChart();
