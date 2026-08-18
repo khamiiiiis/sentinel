@@ -20,6 +20,7 @@ async function api(path, opts = {}) {
 function showLogin(message = '') {
   authToken = null;
   currentRole = null;
+  clearSession();
   document.getElementById('accountsBtn').style.display = 'none';
   document.getElementById('clearAlertsBtn').style.display = 'none';
   document.getElementById('clearPacketsBtn').style.display = 'none';
@@ -58,6 +59,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = await res.json();
     authToken = data.access_token;
     currentRole = data.role;
+    persistSession();
     document.getElementById('accountsBtn').style.display = currentRole === 'admin' ? 'inline-block' : 'none';
     document.getElementById('clearAlertsBtn').style.display = currentRole === 'admin' ? 'inline-block' : 'none';
     document.getElementById('clearPacketsBtn').style.display = currentRole === 'admin' ? 'inline-block' : 'none';
@@ -65,6 +67,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     loadRules();
     loadExclusions();
     refreshStatus();
+    seedPacketStats();
     connectWebSocket();
   } catch (err) {
     errorEl.textContent = 'Could not reach the API - check the API base URL.';
